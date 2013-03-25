@@ -1,0 +1,17 @@
+{
+    "name" : "clock",
+    "version" : "1.4.45",
+    "files" : [
+        "css/style.css",
+        "js/main.js",
+        "img/yosemite-stream.jpg",
+        "img/morning-glory-pool.jpg",
+        "img/los-angeles-skyline.jpg",
+        "img/mountain-109.jpg",
+        "app.html"
+    ],
+    "nocache" : [
+        "http://ajax.googleapis.com/ajax/libs/jquery/1.7/jquery.min.js"
+    ],
+    "main" : "app.html"
+}

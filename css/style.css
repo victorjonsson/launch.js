@@ -1,0 +1,38 @@
+
+#clock {
+    text-align: center;
+    font-family: "Courier New", "Courie", courier, sans-serif;
+    font-weight: bold;
+    opacity: 0.9;
+    width: 100%;
+    position: absolute;
+    top: 50%;
+    left: 0;
+    height: 140px;
+    font-size: 140px;
+    margin-top: -70px;
+    z-index: 100;
+    color: #FFF;
+    letter-spacing: -5px;
+    background: green;
+    filter: alpha(opacity=90);
+    background: rgba(0,0,0, .3);
+}
+
+.clock-background {
+    position: absolute;
+    top:0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.reload-button {
+    position: absolute;
+    bottom: 12px;
+    left: 12px;
+    cursor: pointer;
+    font-weight: bold;
+    padding: 8px;
+}

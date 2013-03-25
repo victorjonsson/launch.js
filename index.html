@@ -1,0 +1,46 @@
+<html>
+<head>
+    <title>launch.js - example app</title>
+    <meta charset="utf-8">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="launch.js (example)">
+    <style>
+        body {
+            background: #F2F2F2;
+        }
+        #launch-panel {
+            border-radius: 20px;
+            box-shadow: 0 0 10px #CCC;
+            background: #FFF;
+            text-align: center;
+            display: none; /* Will be turned on by launch.js */
+        }
+        #launch-progress {
+            border-radius: 20px;
+            box-shadow: inset 0 0 3px 3px #E2E2E2;
+            background: #F2F2F2;
+        }
+        #launch-progress-bar {
+            background: #b3e2f0;
+        }
+        #launch-progress-info {
+            font-size: 11px;
+            color: #888;
+            font-family: Helvetica, sans-serif;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+<div id="launch-panel">
+    <img src="img/app-icon.png">
+        <div id="launch-progress">
+        <div id="launch-progress-bar"></div>
+    </div>
+    <div id="launch-progress-info">
+        Downloading manifest...
+    </div>
+</div>
+<script src="js/launch.js"></script>
+</body>
+</html>
