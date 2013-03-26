@@ -74,3 +74,28 @@ downloaded. The file must be present in the `file` property, and it has to conta
 Your ordinary window.onload (or perhaps `$(window).readey(...)`) will no longer work since the files will be added to
 the DOM after that the page is loaded. Instead you should use `WebApp.on('ready', function() { ... })`
 
+## Hello World!
+
+**index.html**
+
+```html
+<html>
+  <head>
+      <title>Hello World!</title>
+  </head>
+  <body>
+      <div id="launch-panel">
+        <h1 style="text-align:center">Hello World App</h1>
+        <div id="launch-progress">
+            <div id="launch-progress-bar"></div>
+        </div>
+        <div id="launch-progress-info">
+            Downloading manifest...
+        </div>
+</div>
+<script src="launch/launch.min.js"></script>
+  </body>
+</html>
+```
+
+
