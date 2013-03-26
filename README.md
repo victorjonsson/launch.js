@@ -1,6 +1,9 @@
 # launch.js
 
-Lorem te ipsum...
+By using launch.js you will reduce the load on your servers considerably and make you web app become lightening fast. 
+Instead of having an HTML file referring to a bunch of resources (scripts, images, stylesheets and what not) you send
+a very small html file and declare your **resources in a manifest file**. When the web page gets loaded launch.js will 
+download your resources and **save them to local storage**. 
 
 [Here you can see a demo app](http://victorjonsson.se/launch/)
 
