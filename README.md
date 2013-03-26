@@ -43,9 +43,16 @@ app files and download them again when you increase the version number.
 
 #### files *(required)*
 
-An array with all the files that is required by your app and that should be saved to local storage. Be vary of
-declaring a lot of large images so that you won't exceed the local storage quota. In case you do exceed
-the quota the user will alerted that the local storage quota has to be increased.
+An array with all the files that is required by your app and that should be saved to local storage. Be vary when
+declaring several large images so that you won't exceed the local storage quota. In case you do exceed
+the quota, the user will become notified that the local storage quota in the browser has to be increased.
 
-No image will be saved to local storage in those browsers that doesn't support Canvas. They will be still be
-available
+The content of stylesheets and javascripts will asynchroniuosly becom added to the DOM. Other files (such as images)
+will be accessible through `WebApp.resources`. Example:
+
+```js
+    $('#some-element').append( WebApp.resources['img/some-large-image.jpg'] );
+```
+
+Images will not be saved to local storage in those browsers that doesn't support Canvas. You can still access the images
+ through `WebApp.resources` but they will be downloade every time the web page gets loaded.
