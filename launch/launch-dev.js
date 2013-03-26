@@ -1,7 +1,7 @@
 /** * * * * * * * * * * * * * * * * * * * * *
  * launch.js - Web app distribution system
  *
- * @version 1.0.31
+ * @version 1.1
  * @author Victor Jonsson (http://www.victorjonsson)
  * @license Dual licensed under the MIT and the GPLv2 licenses
  */
@@ -437,6 +437,8 @@ var WebApp = (function(win) {
                         var img = document.createElement('IMG');
                         img.onload = function() {
 
+                            _self.concurrentRequests--;
+
                             // Get canvas contents as a data URL
                             if( IS_CANVAS_SUPPORTED ) {
                                 log('Downloaded image '+URL+' using canvas');
@@ -458,9 +460,11 @@ var WebApp = (function(win) {
                             }
                         };
                         img.onerror = function() {
+                            _self.concurrentRequests--;
                             log(URL+' failed to load (image), retrying...', 'info');
+                            _self.request(URL, callback);
                         };
-                        img.src = URL;
+                        img.src = URL; // Start "download"
                     }
 
                     //
