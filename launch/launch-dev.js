@@ -143,20 +143,47 @@ var WebApp = (function(win) {
 
     return {
 
+        /**
+         * @type {EventManager}
+         */
         events : EventManager,
 
+        /**
+         * The number of files that needs to be downloaded
+         * and saved to local storage
+         */
         filesToLoad : 0,
 
+        /**
+         * The number of request to server currently open
+         */
         concurrentRequests : 0,
 
+        /**
+         * Object containing all resources downloaded that
+         * is not stylesheets or scripts
+         */
         resources : {},
 
+        /**
+         * Variable holding the manifest data downloaded
+         * from server
+         */
         manifest : null,
 
+        /**
+         * This request has downloaded the application if
+         * this varaible is true
+         */
         isDownloaded : false,
 
         /**
-         * Start the web app
+         * Start the web app:
+         *  1) Download app.manifest (will fire event "init")
+         *  2) Either download app files from server or load them from local storage
+         *  3) Downloads files that is declared as "nocache" in app.manifest
+         *  4) Add files to dom or WebApp.resources
+         *  5) Fires event "load"
          */
         start : function() {
             var _self = this;
@@ -194,7 +221,7 @@ var WebApp = (function(win) {
         /**
          * Function called in old versions of Internet explorer that
          * moves images from "file" declaration to "nocache" declaration.
-         * This is needed because internet explorer (v <= 10) can't
+         * This is needed because internet explorer (version < 10) can't
          * store the images in local storage
          */
         moveImagesToNoCache : function() {
@@ -243,14 +270,14 @@ var WebApp = (function(win) {
                 this.resources[file] = Utils.parseJSON(content);
             }
 
-            // Image resource
+            // Image resource (base64 encoded)
             else if( Utils.isImageFile(file) && typeof content == 'string' ) {
                 var img = new Image();
                 img.src = content;
                 this.resources[file] = img;
             }
 
-            // Text resource
+            // Text/image resource resource
             else  {
                 this.resources[file] = content;
             }
@@ -489,8 +516,8 @@ var WebApp = (function(win) {
         var opac = panel.style.opacity;
         opac = (opac ? parseFloat(opac) : 1) - 0.04;
         panel.style.opacity = opac;
+        panel.style.filter = 'alpha('+(opac * 100)+')';
         if( opac > 0 ) {
-            panel.style.filter = 'alpha('+(opac * 100)+')';
             setTimeout(function() {
                 fadePanel(callback);
             }, 10);
@@ -546,7 +573,7 @@ var WebApp = (function(win) {
                 infoElem.innerHTML = 'Application downloaded...';
             }
         } else {
-            // now loading files declared as "nocache"
+            // a file declared as "nocache" is downloaded
         }
     });
 
