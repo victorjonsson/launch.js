@@ -1,0 +1,51 @@
+#!/usr/bin/node
+
+var fs = require('fs'),
+    sys = require('sys'),
+    uglifyjs = require("uglify-js"),
+    exec = require('child_process').exec,
+    jsPath = __dirname+'/',
+    mainScript = jsPath + 'launch-dev.js',
+    replaceInFile = function(path, from, to) {
+        fs.writeFileSync(path, fs.readFileSync(path, 'utf-8').replace(from, to));
+    },
+    sourceCode = fs.readFileSync(mainScript, 'utf-8'),
+    newVersion = -1,
+    filePartsDivider = '/** * * * * * * * * * * * * * * * * * * * * *';
+
+/*
+ * Find out new version number
+ */
+var versionParts = sourceCode.split('@version ')[1].split('\n')[0].trim().split('.');
+if(versionParts.length < 3) {
+    // new version number is decided in code
+    newVersion = versionParts.join('.');
+}
+else {
+    // Increase the last number by one
+    var currentSubVersion = parseInt(versionParts.splice(versionParts.length-1, 1)[0]);
+    var newSubVersion = currentSubVersion + 1;
+    newVersion = versionParts.join('.') + '.' + newSubVersion.toString();
+    replaceInFile(mainScript, versionParts.join('.')+'.'+currentSubVersion, newVersion);
+}
+
+replaceInFile(jsPath+'launch-dev.js', 'DEBUG = true', 'DEBUG = false');
+
+var codeSections = sourceCode.split(filePartsDivider);
+var commentSource = codeSections[1].split('*/')[0];
+var commentInit = codeSections[2].split('*/')[0];
+//console.log(commentSource);
+//console.log(commentInit);
+
+fs.writeFileSync(jsPath+'launch-webapp.min.js', '/*'+codeSections[1]);
+fs.writeFileSync(jsPath+'launch-webapp.min.js',
+                        filePartsDivider +commentSource+'*/'+uglifyjs.minify(jsPath+'launch-webapp.min.js').code);
+
+fs.writeFileSync(jsPath+'launch-init.min.js', '/*'+codeSections[2]);
+fs.writeFileSync(jsPath+'launch-init.min.js',
+    filePartsDivider +commentInit+'*/'+uglifyjs.minify(jsPath+'launch-init.min.js').code);
+
+fs.writeFileSync(jsPath+'launch.min.js',
+    filePartsDivider +commentSource+'*/\n'+uglifyjs.minify(jsPath+'launch-dev.js').code);
+
+replaceInFile(jsPath+'launch-dev.js', 'DEBUG = false', 'DEBUG = true');

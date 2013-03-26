@@ -28,7 +28,7 @@ WebApp.on('ready', function() {
         var $newBackground = $('<div></div>');
         $newBackground.append(img);
         $newBackground.addClass('clock-background');
-        $newBackground.insertBefore($currentBackground);
+        $('body').prepend($newBackground);
         $currentBackground.fadeOut('slow', function() {
             $currentBackground.remove();
             $currentBackground = $newBackground;

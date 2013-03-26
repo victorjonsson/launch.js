@@ -1,16 +1,16 @@
 /** * * * * * * * * * * * * * * * * * * * * *
- * Web app object
- * @author Victor Jonsson
+ * launch.js - Web app distribution system
+ *
+ * @version 1.0.31
+ * @author Victor Jonsson (http://www.victorjonsson)
  * @license Dual licensed under the MIT and the GPLv2 licenses
  */
 var WebApp = (function(win) {
 
+    'use strict';
 
-    /** * * * * * * * * * * * * * * * * * * * * *
-     * Base64 class
-     * @copyright Chris Vennes (2002-2001)
-     */
-    var Base64={};Base64.code="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";Base64.encode=function(str,utf8encode){utf8encode=typeof utf8encode=="undefined"?false:utf8encode;var o1,o2,o3,bits,h1,h2,h3,h4,e=[],pad="",c,plain,coded;var b64=Base64.code;plain=utf8encode?str.encodeUTF8():str;c=plain.length%3;if(c>0){while(c++<3){pad+="=";plain+="\0"}}for(c=0;c<plain.length;c+=3){o1=plain.charCodeAt(c);o2=plain.charCodeAt(c+1);o3=plain.charCodeAt(c+2);bits=o1<<16|o2<<8|o3;h1=bits>>18&63;h2=bits>>12&63;h3=bits>>6&63;h4=bits&63;e[c/3]=b64.charAt(h1)+b64.charAt(h2)+b64.charAt(h3)+b64.charAt(h4)}coded=e.join("");coded=coded.slice(0,coded.length-pad.length)+pad;return coded};Base64.decode=function(str,utf8decode){utf8decode=typeof utf8decode=="undefined"?false:utf8decode;var o1,o2,o3,h1,h2,h3,h4,bits,d=[],plain,coded;var b64=Base64.code;coded=utf8decode?str.decodeUTF8():str;for(var c=0;c<coded.length;c+=4){h1=b64.indexOf(coded.charAt(c));h2=b64.indexOf(coded.charAt(c+1));h3=b64.indexOf(coded.charAt(c+2));h4=b64.indexOf(coded.charAt(c+3));bits=h1<<18|h2<<12|h3<<6|h4;o1=bits>>>16&255;o2=bits>>>8&255;o3=bits&255;d[c/4]=String.fromCharCode(o1,o2,o3);if(h4==64)d[c/4]=String.fromCharCode(o1,o2);if(h3==64)d[c/4]=String.fromCharCode(o1)}plain=d.join("");return utf8decode?plain.decodeUTF8():plain};var Utf8={};Utf8.encode=function(strUni){var strUtf=strUni.replace(/[\u0080-\u07ff]/g,function(c){var cc=c.charCodeAt(0);return String.fromCharCode(192|cc>>6,128|cc&63)});strUtf=strUtf.replace(/[\u0800-\uffff]/g,function(c){var cc=c.charCodeAt(0);return String.fromCharCode(224|cc>>12,128|cc>>6&63,128|cc&63)});return strUtf};Utf8.decode=function(strUtf){var strUni=strUtf.replace(/[\u00e0-\u00ef][\u0080-\u00bf][\u0080-\u00bf]/g,function(c){var cc=(c.charCodeAt(0)&15)<<12|(c.charCodeAt(1)&63)<<6|c.charCodeAt(2)&63;return String.fromCharCode(cc)});strUni=strUni.replace(/[\u00c0-\u00df][\u0080-\u00bf]/g,function(c){var cc=(c.charCodeAt(0)&31)<<6|c.charCodeAt(1)&63;return String.fromCharCode(cc)});return strUni};var RC4Cipcher={encrypt:function(key,pt){var s=new Array;for(var i=0;i<256;i++){s[i]=i}var j=0,x;for(i=0;i<256;i++){j=(j+s[i]+key.charCodeAt(i%key.length))%256;x=s[i];s[i]=s[j];s[j]=x}i=0;j=0;var ct="";for(var y=0;y<pt.length;y++){i=(i+1)%256;j=(j+s[i])%256;x=s[i];s[i]=s[j];s[j]=x;ct+=String.fromCharCode(pt.charCodeAt(y)^s[(s[i]+s[j])%256])}return ct},decrypt:function(key,ct){return this.encrypt(key,ct)}};
+    // Log level
+    var DEBUG = true;
 
     // Detect possible IE version
     var IS_OLD_IE = false;
@@ -18,6 +18,16 @@ var WebApp = (function(win) {
         IS_OLD_IE = parseFloat(navigator.appVersion.split("MSIE")[1]) < 10;
     }
 
+    // Support for canvas
+    var IS_CANVAS_SUPPORTED = false;
+    try {
+        var c = document.createElement("canvas");
+        IS_CANVAS_SUPPORTED = 'toDataURL' in c && 'getContext' in c;
+    } catch(e) {}
+
+    /**
+     * Collection of utility methods
+     */
     var Utils = {
 
         /**
@@ -58,26 +68,29 @@ var WebApp = (function(win) {
          */
         parseJSON : function(data) {
 
-            if( !IS_OLD_IE ) {
-                return JSON.parse(data);
-            }
+            try {
+                if( !IS_OLD_IE ) {
+                    return JSON.parse(data);
+                }
 
-            data = data.replace(/^\s\s*/, '').replace(/\s\s*$/, ''); // For ie's sake...
+                data = data.replace(/^\s\s*/, '').replace(/\s\s*$/, ''); // For ie's sake...
 
-            // JSON RegExp
-            var rvalidchars = /^[\],:{}\s]*$/,
-                rvalidbraces = /(?:^|:|,)(?:\s*\[)+/g,
-                rvalidescape = /\\(?:["\\\/bfnrt]|u[\da-fA-F]{4})/g,
-                rvalidtokens = /"[^"\\\r\n]*"|true|false|null|-?(?:\d+\.|)\d+(?:[eE][+-]?\d+|)/g;
+                // JSON RegExp
+                var rvalidchars = /^[\],:{}\s]*$/,
+                    rvalidbraces = /(?:^|:|,)(?:\s*\[)+/g,
+                    rvalidescape = /\\(?:["\\\/bfnrt]|u[\da-fA-F]{4})/g,
+                    rvalidtokens = /"[^"\\\r\n]*"|true|false|null|-?(?:\d+\.|)\d+(?:[eE][+-]?\d+|)/g;
 
-            if ( rvalidchars.test( data.replace( rvalidescape, "@" )
-                .replace( rvalidtokens, "]" )
-                .replace( rvalidbraces, "")) ) {
+                if ( rvalidchars.test( data.replace( rvalidescape, "@" )
+                    .replace( rvalidtokens, "]" )
+                    .replace( rvalidbraces, "")) ) {
 
-                return ( new Function( "return " + data ) )();
-            }
+                    return ( new Function( "return " + data ) )();
+                }
+            } catch(e) {}
 
-            throw new Error('Unable to parse JSON')
+            // we shouldn't have come this far
+            throw new Error('Unable to parse JSON');
         },
 
         /**
@@ -91,6 +104,10 @@ var WebApp = (function(win) {
 
     };
 
+
+    /**
+     * Object managing events
+     */
     var EventManager = {
 
         listeners : {},
@@ -106,6 +123,20 @@ var WebApp = (function(win) {
                 for(var i=0; i < this.listeners[event].length; i++) {
                     this.listeners[event][i](arg);
                 }
+            }
+        }
+    };
+
+    /**
+     * @param {*} msg
+     * @param {String} [level]
+     */
+    var log = function(msg, level) {
+        if( console ) {
+            if( (level == 'debug' || !level) && DEBUG ) {
+                console.log('DEBUG: '+msg);
+            } else if(level == 'info') {
+                console.log(msg);
             }
         }
     };
@@ -137,19 +168,22 @@ var WebApp = (function(win) {
                 var newVersion = Utils.versionToFloat(_self.manifest.version);
                 _self.isDownloaded = newVersion == currentVersion;
 
+                log('Manfiest loaded, calling event init');
+
                 _self.events.call('init');
 
-                if( IS_OLD_IE ) {
+                if( IS_OLD_IE || !IS_CANVAS_SUPPORTED ) {
+                    log('Moving images to no cache');
                     _self.moveImagesToNoCache();
                 }
 
                 // Download new version
                 if( !_self.isDownloaded ) {
-                    console.log('Downloading new app');
+                    log('Downloading new app', 'info');
                     _self.downloadApp(currentVersion);
                 }
                 else {
-                    console.log('Loading app from local storage');
+                    log('Fetching app files from local storage', 'info');
                     _self.downloadUnCachedFiles(function() {
                         _self.initiateFiles();
                     });
@@ -177,7 +211,7 @@ var WebApp = (function(win) {
 
             // old ie can not cache images
             var fileCopy = this.manifest.files.slice(0, this.manifest.files.length);
-            for(i=0; i < fileCopy.length; i++) {
+            for(var i=0; i < fileCopy.length; i++) {
                 if( Utils.isImageFile(fileCopy[i]) ) {
                     this.manifest.nocache.push(fileCopy[i]);
                     this.manifest.files.splice(getFileIndex(fileCopy[i]), 1);
@@ -186,7 +220,7 @@ var WebApp = (function(win) {
         },
 
         /**
-         * Add content to DOM
+         * Add content either to DOM or WebApp.resources
          * @param content
          * @param file
          */
@@ -210,7 +244,7 @@ var WebApp = (function(win) {
             }
 
             // Image resource
-            else if( Utils.isImageFile(file) ) {
+            else if( Utils.isImageFile(file) && typeof content == 'string' ) {
                 var img = new Image();
                 img.src = content;
                 this.resources[file] = img;
@@ -237,14 +271,18 @@ var WebApp = (function(win) {
 
             for(var i=0; i < this.manifest.files.length; i++) {
                 if( this.halt ) {
-                    console.log('halted download...');
+                    log('halted download...', 'info');
                     break;
                 }
-                this.request(this.manifest.files[i], function(content, http, file) {
+                this.request(this.manifest.files[i], function(content, file) {
+                    log(file+' downloaded');
+                    if( _self.halt ) {
+                        return;
+                    }
                     try {
                         win.localStorage.setItem(appName+'-file-'+file, content);
                     } catch(e) {
-                        console.log(e);
+                        log(e, 'info');
                         _self.events.call('QuotaExceeded');
                         _self.halt = true;
                         return;
@@ -280,6 +318,7 @@ var WebApp = (function(win) {
             // Let things catch up
             setTimeout(function() {
                 _self.events.call('load');
+                log('App loaded', 'info');
             }, 100);
         },
 
@@ -291,7 +330,7 @@ var WebApp = (function(win) {
          */
         downloadUnCachedFiles : function(callback) {
             var _self = this, i;
-
+            log('Downloading uncached files', 'info');
             if( this.manifest.nocache ) {
                 var unCachedFilesLoaded = this.manifest.nocache.length;
                 var headNode = win.document.getElementsByTagName('head')[0];
@@ -309,7 +348,7 @@ var WebApp = (function(win) {
                         headNode.appendChild(script);
                     }
                     else {
-                        this.request(file, function(content, http, file) {
+                        this.request(file, function(content, file) {
                             _self.addToDOM(content, file);
                             unCachedFilesLoaded--;
                             if( unCachedFilesLoaded == 0 ) {
@@ -327,6 +366,7 @@ var WebApp = (function(win) {
          * Removes all stored files used in this app
          */
         removeApp : function() {
+            log('Removing old app');
             win.localStorage.removeItem(this.manifest.name+'-app-version');
             var files = win.localStorage.getItem(this.manifest.name+'-app-files');
             if( files ) {
@@ -345,7 +385,8 @@ var WebApp = (function(win) {
          */
         request : function(URL, callback) {
             var _self = this;
-            if( this.concurrentRequests > 1 ) {
+            if( this.concurrentRequests > 4 ) {
+                log(URL+' being queued for download');
                 setTimeout(function() {
                     _self.request(URL, callback);
                 }, 500);
@@ -353,40 +394,74 @@ var WebApp = (function(win) {
             else {
                 this.concurrentRequests++;
                 setTimeout(function() {
-                    var http = 'XMLHttpRequest' in win ? new XMLHttpRequest() : new ActiveXObject("Microsoft.XMLHTTP");
-                    if( 'overrideMimeType' in http ) {
-                        http.overrideMimeType('text/plain; charset=x-user-defined');
-                    }
-                    http.onreadystatechange = function() {
-                        if( http.readyState == 4 ) {
-                            _self.concurrentRequests--;
-                            if( http.status != 200 ) {
-                                console.warn(URL+' responded with status '+http.status+', retrying...');
-                                _self.request(URL, callback);
+                    var ext = URL.substr(URL.length-4, 4).toLocaleLowerCase();
+                    if( ext != 'jpeg' )
+                        ext = ext.substr(1, 3);
+                    if( ext == 'jpg' )
+                        ext = 'jpeg';
+
+                    var isImage = Utils.isImageFile(URL);
+                    log(URL+' starting download');
+
+                    //
+                    // Download image using canvas
+                    ///
+                    if( isImage ) {
+                        var img = document.createElement('IMG');
+                        img.onload = function() {
+
+                            // Get canvas contents as a data URL
+                            if( IS_CANVAS_SUPPORTED ) {
+                                log('Downloaded image '+URL+' using canvas');
+
+                                var imgCanvas = document.createElement("canvas"),
+                                    imgContext = imgCanvas.getContext("2d");
+
+                                // Make sure canvas is as big as the picture
+                                imgCanvas.width = this.width;
+                                imgCanvas.height = this.height;
+
+                                // Draw image into canvas element
+                                imgContext.drawImage(this, 0, 0, this.width, this.height);
+
+                                callback(imgCanvas.toDataURL("image/"+ext), URL);
+
                             } else {
-                                if( Utils.isImageFile(URL) ) {
-                                    var data = '';
-                                    var dataLen = http.responseText.length-1;
-                                    for (var i=0; i<=dataLen; i++)
-                                        data += String.fromCharCode(http.responseText.charCodeAt(i) & 0xff);
+                                callback(this, URL);
+                            }
+                        };
+                        img.onerror = function() {
+                            log(URL+' failed to load (image), retrying...', 'info');
+                        };
+                        img.src = URL;
+                    }
 
-                                    var ext = URL.substr(URL.length-4, 4).toLocaleLowerCase();
-                                    if( ext != 'jpeg' )
-                                        ext = ext.substr(1, 3);
-
-                                    callback('data:image/'+ext+';base64,'+Base64.encode(data), http, URL);
-                                }
-                                else {
-                                    callback(http.responseText, http, URL);
+                    //
+                    // Download using ajax
+                    //
+                    else {
+                        var http = 'XMLHttpRequest' in win ? new XMLHttpRequest() : new ActiveXObject("Microsoft.XMLHTTP");
+                        if( 'overrideMimeType' in http ) {
+                            http.overrideMimeType('text/plain; charset=x-user-defined');
+                        }
+                        http.onreadystatechange = function() {
+                            if( http.readyState == 4 ) {
+                                _self.concurrentRequests--;
+                                if( http.status != 200 ) {
+                                    log(URL+' responded with status '+http.status+', retrying...', 'info');
+                                    _self.request(URL, callback);
+                                } else {
+                                    callback(http.responseText, URL);
                                 }
                             }
-                        }
-                    };
-                    http.open("GET", URL, false);
-                    http.send();
+                        };
+                        http.open("GET", URL, false);
+                        http.send();
+                    }
                 }, 50);
             }
         },
+
 
         /**
          * Bind listener to an event
@@ -402,9 +477,9 @@ var WebApp = (function(win) {
 })(window);
 
 
-/**
- * App initiation. Replace this code with something of your own if
- * you want to customaize the preloader screen
+/** * * * * * * * * * * * * * * * * * * * * *
+ * App initiation (you may replace this code with
+ * something of your own if you want)
  */
 (function(WebApp, win) {
 
@@ -423,7 +498,6 @@ var WebApp = (function(win) {
             callback();
         }
     };
-
 
     panel = document.getElementById('launch-panel');
     progressBar = document.getElementById('launch-progress-bar');
@@ -447,7 +521,6 @@ var WebApp = (function(win) {
 
     // Show download info
     WebApp.on('init', function() {
-        console.log('Manifest downloaded');
         infoElem.innerHTML = 'Downloaded <span id="loaded-launch-files"></span>'+
                                 ' of <span id="num-launch-files"></span> files';
         numElem = document.getElementById('num-launch-files');
@@ -490,7 +563,6 @@ var WebApp = (function(win) {
 
     // Remove preloader and setup app
     WebApp.on('load', function() {
-        console.log('app ready');
         fadePanel(function() {
             var mainFile = WebApp.manifest.main;
             if( mainFile ) {

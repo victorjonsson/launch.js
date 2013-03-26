@@ -1,6 +1,6 @@
 {
     "name" : "clock",
-    "version" : "1.4.45",
+    "version" : "1.3",
     "files" : [
         "css/style.css",
         "js/main.js",
