@@ -47,8 +47,8 @@ An array with all the files that is required by your app and that should be save
 declaring several large images so that you won't exceed the local storage quota. In case you do exceed
 the quota, the user will become notified that the local storage quota in the browser has to be increased.
 
-The content of stylesheets and javascripts will asynchroniuosly becom added to the DOM. Other files (such as images)
-will be accessible through `WebApp.resources`. Example:
+The content of stylesheets and javascripts will be added to the DOM asynchroneously. Other files (such as 
+images) will be accessible through WebApp.resources. Example:
 
 ```js
     $('#some-element').append( WebApp.resources['img/some-large-image.jpg'] );
@@ -66,12 +66,12 @@ scripts must be declared in this property.
 #### main
 
 This property is used to point to one of the files in the app which content should be added to DOM once all files is
-downloaded. The file must be present in the `file` property, and it has to contain HTML (*this property is optional*)
+downloaded. The file must be present in the `file` property, and it has to contain HTML *(this property is optional)*.
 
 
 ## What about window.onload?
 
-Your ordinary window.onload (or perhaps `$(window).readey(...)`) will no longer work since the files will be added to
+Your ordinary window.onload (or perhaps `$(window).ready(...)`) will no longer work since the files will be added to
 the DOM after that the page is loaded. Instead you should use `WebApp.on('ready', function() { ... })`
 
 ## Hello World!
