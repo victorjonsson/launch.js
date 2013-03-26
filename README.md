@@ -92,10 +92,32 @@ the DOM after that the page is loaded. Instead you should use `WebApp.on('ready'
         <div id="launch-progress-info">
             Downloading manifest...
         </div>
-</div>
-<script src="launch/launch.min.js"></script>
+    </div>
+    <script src="launch/launch.min.js"></script>
   </body>
 </html>
 ```
 
+**script.js**
+
+```js
+WebApp.on('ready', function() {
+    $('body').html('<h1>Hello World!</h1>');
+});
+```
+
+**app.manifest**
+
+```json
+{
+    "name" : "hello-world",
+    "version" : "1.0",
+    "files" : [
+        "script.js"
+    ],
+    "nocache" : [
+        "http://ajax.googleapis.com/ajax/libs/jquery/1.7/jquery.min.js",
+    ]
+}
+```
 
