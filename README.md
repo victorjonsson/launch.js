@@ -10,7 +10,7 @@ IE v8+, Firefox v18+, Safari v5.1+, Chrome v21+, Opera v12.1+, iOS Safari v4.2+,
 
 ## The manifest
 
-The script will start of by loading a manifest from your server (app.manifest). This manifest holds the
+Launch.js will start of by loading a manifest from your server (app.manifest). This manifest holds the
 information about which files that is required by the app. Example:
 
 ```json
