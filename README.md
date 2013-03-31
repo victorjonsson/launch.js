@@ -1,6 +1,6 @@
 # launch.js
 
-By using launch.js you will reduce the load on your servers considerably and make you web app become lightening fast. 
+By using launch.js you will reduce the load on your servers considerably and make your web app become lightening fast. 
 Instead of having an HTML file referring to a bunch of resources (scripts, images, stylesheets and what not) you send
 a very small html file and declare your **resources in a manifest file**. When the web page gets loaded, launch.js will 
 download your resources and **save them to local storage**. 
@@ -63,7 +63,7 @@ Images will not be saved to local storage in those browsers that doesn't support
 
 #### nocache *(required)*
 
-Here is where you place files that your app is dependent on but that should'nt be saved to local storage. Third-party
+Array where you put files that's required by your app but shouldn't be saved to local storage. Third-party
 scripts must be declared in this property.
 
 #### main
