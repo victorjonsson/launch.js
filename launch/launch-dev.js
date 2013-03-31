@@ -1,7 +1,7 @@
 /** * * * * * * * * * * * * * * * * * * * * *
  * launch.js - Web app distribution system
  *
- * @version 1.1
+ * @version 1.1.0.2
  * @author Victor Jonsson (http://www.victorjonsson)
  * @license Dual licensed under the MIT and the GPLv2 licenses
  */
@@ -358,7 +358,7 @@ var WebApp = (function(win) {
         downloadUnCachedFiles : function(callback) {
             var _self = this, i;
             log('Downloading uncached files', 'info');
-            if( this.manifest.nocache ) {
+            if( this.manifest.nocache && this.manifest.nocache.length ) {
                 var unCachedFilesLoaded = this.manifest.nocache.length;
                 var headNode = win.document.getElementsByTagName('head')[0];
                 for(i=0; i < this.manifest.nocache.length; i++) {
