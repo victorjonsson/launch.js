@@ -1,5 +1,13 @@
 #!/usr/bin/node
-
+/**
+ * Build file for launch.js
+ * -----------------------------
+ *  Increases version number and minifies launch-dev.js into three
+ *  different files:
+ *      launch.min.js - Contains the entire source of launch-dev.js
+ *      launch-webapp.min.js - Contains only the web app logic
+ *      launch-init.min.js - Contains the code that initiate launch.js
+ */
 var fs = require('fs'),
     sys = require('sys'),
     uglifyjs = require("uglify-js"),

@@ -13,7 +13,7 @@ IE v8+, Firefox v18+, Safari v5.1+, Chrome v21+, Opera v12.1+, iOS Safari v4.2+,
 
 ## The manifest
 
-Launch.js will start of by loading a manifest from your server (app.manifest). This manifest holds
+Launch.js will start of by loading a file named app.manifest from your server. This manifest holds
 information about which files that is required by the app. Example:
 
 ```json
@@ -71,6 +71,14 @@ scripts must be declared in this property.
 This property is used to point to one of the files in the app which content should be added to DOM once all files is
 downloaded. The file must be present in the `file` property, and it has to contain HTML *(this property is optional)*.
 
+### Must the manifest be located at the root of the website?
+
+Of course not. If you want to use another path to your manifest file you can use a meta tag that you name
+*app-manifest*.
+
+```html
+<meta name="app-manifest" content="static/app.manifest" />
+```
 
 ## What about window.onload?
 

@@ -1,7 +1,7 @@
 /** * * * * * * * * * * * * * * * * * * * * *
  * launch.js - Web app distribution system
  *
- * @version 1.1.0.2
+ * @version 1.1.5
  * @author Victor Jonsson (http://www.victorjonsson)
  * @license Dual licensed under the MIT and the GPLv2 licenses
  */
@@ -173,21 +173,29 @@ var WebApp = (function(win) {
 
         /**
          * This request has downloaded the application if
-         * this varaible is true
+         * this variable is true
          */
         isDownloaded : false,
 
         /**
          * Start the web app:
-         *  1) Download app.manifest (will fire event "init")
-         *  2) Either download app files from server or load them from local storage
-         *  3) Downloads files that is declared as "nocache" in app.manifest
-         *  4) Add files to dom or WebApp.resources
-         *  5) Fires event "load"
+         *  1) Search after meta tag with name app-manifest referring to manifest file
+         *  2) Download app.manifest (will fire event "init")
+         *  3) Either download app files from server or load them from local storage
+         *  4) Downloads files that is declared as "nocache" in app.manifest
+         *  5) Add files to dom or WebApp.resources
+         *  6) Fires event "load"
          */
         start : function() {
             var _self = this;
-            this.request('app.manifest', function(response) {
+            var manifestFile = 'app.manifest';
+            var meta = win.document.getElementsByTagName('meta');
+            for(var i=0; i < meta.length; i++) {
+                if( meta[i].getAttribute('name') === 'app-manifest' ) {
+                    manifestFile = meta[i].getAttribute('content');
+                }
+            }
+            this.request(manifestFile, function(response) {
 
                 _self.manifest = Utils.parseJSON(response);
 
@@ -234,6 +242,7 @@ var WebApp = (function(win) {
                     if( _self.manifest.files[i] == f )
                         return i;
                 }
+                return -1;
             };
 
             // old ie can not cache images
@@ -434,7 +443,7 @@ var WebApp = (function(win) {
                     // Download image using canvas
                     ///
                     if( isImage ) {
-                        var img = document.createElement('IMG');
+                        var img = win.document.createElement('IMG');
                         img.onload = function() {
 
                             _self.concurrentRequests--;
@@ -443,7 +452,7 @@ var WebApp = (function(win) {
                             if( IS_CANVAS_SUPPORTED ) {
                                 log('Downloaded image '+URL+' using canvas');
 
-                                var imgCanvas = document.createElement("canvas"),
+                                var imgCanvas = win.document.createElement("canvas"),
                                     imgContext = imgCanvas.getContext("2d");
 
                                 // Make sure canvas is as big as the picture
@@ -486,7 +495,7 @@ var WebApp = (function(win) {
                                 }
                             }
                         };
-                        http.open("GET", URL, false);
+                        http.open("GET", URL, true);
                         http.send();
                     }
                 }, 50);
