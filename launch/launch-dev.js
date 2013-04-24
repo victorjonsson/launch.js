@@ -1,7 +1,7 @@
 /** * * * * * * * * * * * * * * * * * * * * *
  * launch.js - Web app distribution system
  *
- * @version 1.1.5
+ * @version 1.1.6
  * @author Victor Jonsson (http://www.victorjonsson)
  * @license Dual licensed under the MIT and the GPLv2 licenses
  */
@@ -53,12 +53,32 @@ var WebApp = (function(win) {
             var element = win.document.createElement(nodeName);
             element.innerHTML = content;
             if( typeof parentNode == 'string' ) {
-                win.document.getElementsByTagName(parentNode)[0].appendChild(element);
+                Utils.elem(parentNode).appendChild(element);
             }
             else if( typeof parentNode == 'object' && parentNode ) {
                 parentNode.appendChild(element);
             }
             return element;
+        },
+
+        /**
+         * Get first element or iterate over all elements
+         * @param {String} q
+         * @param {Function|Boolean} callback
+         * @param {String} [func]
+         * @returns {*}
+         */
+        elem : function(q, callback, func) {
+            if( !func )
+                func = 'getElementsByTagName';
+            var elem = win.document[func](q);
+            if( !callback ) {
+                return elem[0];
+            }
+            for(var i=0; i < elem.length; i++) {
+                if( callback(elem[i], i) === false )
+                    break;
+            }
         },
 
         /**
@@ -178,6 +198,11 @@ var WebApp = (function(win) {
         isDownloaded : false,
 
         /**
+         * Base path for files declared in app.manifest
+         */
+        basePath : '',
+
+        /**
          * Start the web app:
          *  1) Search after meta tag with name app-manifest referring to manifest file
          *  2) Download app.manifest (will fire event "init")
@@ -189,12 +214,12 @@ var WebApp = (function(win) {
         start : function() {
             var _self = this;
             var manifestFile = 'app.manifest';
-            var meta = win.document.getElementsByTagName('meta');
-            for(var i=0; i < meta.length; i++) {
-                if( meta[i].getAttribute('name') === 'app-manifest' ) {
-                    manifestFile = meta[i].getAttribute('content');
+            Utils.elem('meta', function(meta) {
+                if( meta.getAttribute('name') === 'app-manifest' ) {
+                    manifestFile = meta.getAttribute('content');
+                    return false;
                 }
-            }
+            });
             this.request(manifestFile, function(response) {
 
                 _self.manifest = Utils.parseJSON(response);
@@ -305,6 +330,13 @@ var WebApp = (function(win) {
 
             win.localStorage.setItem(this.manifest.name+'-app-version', this.manifest.version);
 
+            Utils.elem('meta', function(meta) {
+                if( meta.getAttribute('name') === 'app-base-path' ) {
+                    _self.basePath = meta.getAttribute('content');
+                    return false;
+                }
+            });
+
             for(var i=0; i < this.manifest.files.length; i++) {
                 if( this.halt ) {
                     log('halted download...', 'info');
@@ -369,7 +401,7 @@ var WebApp = (function(win) {
             log('Downloading uncached files', 'info');
             if( this.manifest.nocache && this.manifest.nocache.length ) {
                 var unCachedFilesLoaded = this.manifest.nocache.length;
-                var headNode = win.document.getElementsByTagName('head')[0];
+                var headNode = Utils.elem('head');
                 for(i=0; i < this.manifest.nocache.length; i++) {
                     var file = this.manifest.nocache[i];
                     if( file.substr(file.length-3, 3) == '.js' ) {
@@ -430,6 +462,9 @@ var WebApp = (function(win) {
             else {
                 this.concurrentRequests++;
                 setTimeout(function() {
+                    var protocolPos = URL.indexOf('://');
+                    var downloadURL = protocolPos > -1 && protocolPos < 6 ? URL : _self.basePath + URL;
+
                     var ext = URL.substr(URL.length-4, 4).toLocaleLowerCase();
                     if( ext != 'jpeg' )
                         ext = ext.substr(1, 3);
@@ -473,7 +508,7 @@ var WebApp = (function(win) {
                             log(URL+' failed to load (image), retrying...', 'info');
                             _self.request(URL, callback);
                         };
-                        img.src = URL; // Start "download"
+                        img.src = downloadURL; // Start "download"
                     }
 
                     //
@@ -495,7 +530,7 @@ var WebApp = (function(win) {
                                 }
                             }
                         };
-                        http.open("GET", URL, true);
+                        http.open("GET", downloadURL, true);
                         http.send();
                     }
                 }, 50);
