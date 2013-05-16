@@ -1,7 +1,7 @@
 /** * * * * * * * * * * * * * * * * * * * * *
  * launch.js - Web app distribution system
  *
- * @version 1.1.6
+ * @version 1.1.8
  * @author Victor Jonsson (http://www.victorjonsson)
  * @license Dual licensed under the MIT and the GPLv2 licenses
  */
@@ -384,10 +384,8 @@ var WebApp = (function(win) {
             }
             var _self = this;
             // Let things catch up
-            setTimeout(function() {
-                _self.events.call('load');
-                log('App loaded', 'info');
-            }, 100);
+            _self.events.call('load');
+            log('App loaded', 'info');
         },
 
         /**
@@ -457,83 +455,81 @@ var WebApp = (function(win) {
                 log(URL+' being queued for download');
                 setTimeout(function() {
                     _self.request(URL, callback);
-                }, 500);
+                }, 50);
             }
             else {
                 this.concurrentRequests++;
-                setTimeout(function() {
-                    var protocolPos = URL.indexOf('://');
-                    var downloadURL = protocolPos > -1 && protocolPos < 6 ? URL : _self.basePath + URL;
+                var protocolPos = URL.indexOf('://'),
+                    downloadURL = protocolPos > -1 && protocolPos < 6 ? URL : _self.basePath + URL,
+                    ext = URL.substr(URL.length-4, 4).toLocaleLowerCase(),
+                    isImage = Utils.isImageFile(URL);
 
-                    var ext = URL.substr(URL.length-4, 4).toLocaleLowerCase();
-                    if( ext != 'jpeg' )
-                        ext = ext.substr(1, 3);
-                    if( ext == 'jpg' )
-                        ext = 'jpeg';
+                if( ext != 'jpeg' )
+                    ext = ext.substr(1, 3);
+                if( ext == 'jpg' )
+                    ext = 'jpeg';
 
-                    var isImage = Utils.isImageFile(URL);
-                    log(URL+' starting download');
+                log(URL+' starting download');
 
-                    //
-                    // Download image using canvas
-                    ///
-                    if( isImage ) {
-                        var img = win.document.createElement('IMG');
-                        img.onload = function() {
+                //
+                // Download image using canvas
+                ///
+                if( isImage ) {
+                    var img = win.document.createElement('IMG');
+                    img.onload = function() {
 
-                            _self.concurrentRequests--;
+                        _self.concurrentRequests--;
 
-                            // Get canvas contents as a data URL
-                            if( IS_CANVAS_SUPPORTED ) {
-                                log('Downloaded image '+URL+' using canvas');
+                        // Get canvas contents as a data URL
+                        if( IS_CANVAS_SUPPORTED ) {
+                            log('Downloaded image '+URL+' using canvas');
 
-                                var imgCanvas = win.document.createElement("canvas"),
-                                    imgContext = imgCanvas.getContext("2d");
+                            var imgCanvas = win.document.createElement("canvas"),
+                                imgContext = imgCanvas.getContext("2d");
 
-                                // Make sure canvas is as big as the picture
-                                imgCanvas.width = this.width;
-                                imgCanvas.height = this.height;
+                            // Make sure canvas is as big as the picture
+                            imgCanvas.width = this.width;
+                            imgCanvas.height = this.height;
 
-                                // Draw image into canvas element
-                                imgContext.drawImage(this, 0, 0, this.width, this.height);
+                            // Draw image into canvas element
+                            imgContext.drawImage(this, 0, 0, this.width, this.height);
 
-                                callback(imgCanvas.toDataURL("image/"+ext), URL);
+                            callback(imgCanvas.toDataURL("image/"+ext), URL);
 
-                            } else {
-                                callback(this, URL);
-                            }
-                        };
-                        img.onerror = function() {
-                            _self.concurrentRequests--;
-                            log(URL+' failed to load (image), retrying...', 'info');
-                            _self.request(URL, callback);
-                        };
-                        img.src = downloadURL; // Start "download"
-                    }
-
-                    //
-                    // Download using ajax
-                    //
-                    else {
-                        var http = 'XMLHttpRequest' in win ? new XMLHttpRequest() : new ActiveXObject("Microsoft.XMLHTTP");
-                        if( 'overrideMimeType' in http ) {
-                            http.overrideMimeType('text/plain; charset=x-user-defined');
+                        } else {
+                            callback(this, URL);
                         }
-                        http.onreadystatechange = function() {
-                            if( http.readyState == 4 ) {
-                                _self.concurrentRequests--;
-                                if( http.status != 200 ) {
-                                    log(URL+' responded with status '+http.status+', retrying...', 'info');
-                                    _self.request(URL, callback);
-                                } else {
-                                    callback(http.responseText, URL);
-                                }
-                            }
-                        };
-                        http.open("GET", downloadURL, true);
-                        http.send();
+                    };
+                    img.onerror = function() {
+                        _self.concurrentRequests--;
+                        log(URL+' failed to load (image), retrying...', 'info');
+                        _self.request(URL, callback);
+                    };
+                    img.src = downloadURL; // Start "download"
+                }
+
+                //
+                // Download using ajax
+                //
+                else {
+                    var http = 'XMLHttpRequest' in win ? new XMLHttpRequest() : new ActiveXObject("Microsoft.XMLHTTP");
+                    if( 'overrideMimeType' in http ) {
+                        http.overrideMimeType('text/plain; charset=x-user-defined');
                     }
-                }, 50);
+                    http.onreadystatechange = function() {
+                        if( http.readyState == 4 ) {
+                            _self.concurrentRequests--;
+                            if( http.status != 200 ) {
+                                log(URL+' responded with status '+http.status+', retrying...', 'info');
+                                _self.request(URL, callback);
+                            } else {
+                                callback(http.responseText, URL);
+                            }
+                        }
+                    };
+                    http.open("GET", downloadURL, true);
+                    http.send();
+                }
             }
         },
 
@@ -570,6 +566,7 @@ var WebApp = (function(win) {
                 fadePanel(callback);
             }, 10);
         } else {
+            panel.parentNode.removeChild(panel);
             callback();
         }
     };
@@ -597,7 +594,7 @@ var WebApp = (function(win) {
     // Show download info
     WebApp.on('init', function() {
         infoElem.innerHTML = 'Downloaded <span id="loaded-launch-files"></span>'+
-                                ' of <span id="num-launch-files"></span> files';
+            ' of <span id="num-launch-files"></span> files';
         numElem = document.getElementById('num-launch-files');
         loadedElem = document.getElementById('loaded-launch-files');
 
@@ -632,23 +629,24 @@ var WebApp = (function(win) {
         infoElem.style.paddingTop = '10px';
         infoElem.style.lineHeight = '130%';
         infoElem.innerHTML = '<strong style="color:red">ERROR<br /></strong><strong>Local storage quoata exceeded.</strong> '+
-                                '<br /> You have to increase the local storage quota in your browser in order '+
-                                'to run this web app.';
+            '<br /> You have to increase the local storage quota in your browser in order '+
+            'to run this web app.';
     });
 
     // Remove preloader and setup app
     WebApp.on('load', function() {
         fadePanel(function() {
-            var mainFile = WebApp.manifest.main;
-            if( mainFile ) {
-                win.document.getElementsByTagName('body')[0].innerHTML = WebApp.resources[mainFile]
+            var main = WebApp.manifest.main;
+            if( typeof main == 'object' && typeof main.file == 'string' ) {
+                win.document.getElementById( main.element).innerHTML = WebApp.resources[main.file];
+            }
+            else if( main ) {
+                win.document.getElementsByTagName('body')[0].innerHTML = WebApp.resources[main]
             }
             WebApp.events.call('ready');
         });
     });
 
-    setTimeout(function() {
-        WebApp.start();
-    }, 500);
+    WebApp.start();
 
 })(WebApp, window);
