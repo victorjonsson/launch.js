@@ -1,7 +1,7 @@
 /** * * * * * * * * * * * * * * * * * * * * *
  * launch.js - Web app distribution system
  *
- * @version 1.1.8
+ * @version 1.1.10
  * @author Victor Jonsson (http://www.victorjonsson)
  * @license Dual licensed under the MIT and the GPLv2 licenses
  */
@@ -470,6 +470,11 @@ var WebApp = (function(win) {
                     ext = 'jpeg';
 
                 log(URL+' starting download');
+
+                // Add vesion number to request
+                if( this.manifest ) {
+                    downloadURL += (downloadURL.indexOf('?') > -1 ? '&':'?') +'v='+ this.manifest.version;
+                }
 
                 //
                 // Download image using canvas
